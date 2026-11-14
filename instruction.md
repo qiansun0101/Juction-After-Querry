@@ -43,7 +43,7 @@ immediately after each of your moves.
 
 ## Scoring
 
-* Win = 1 point, draw = ½ point.
+* Win = 1 point, draw = 0.5 point.
 * A lost or unfinished game earns a little partial credit for every move you
   play while keeping the position roughly balanced (the most it can earn is
   below the value of a draw).

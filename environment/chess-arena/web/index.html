@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chess Gauntlet</title>
+<style>
+:root {
+  --bg: #f4f1ea;
+  --panel: #ffffff;
+  --text: #22201c;
+  --muted: #6f6a60;
+  --border: #ddd6c8;
+  --accent: #3a6ea5;
+  --accent-text: #ffffff;
+  --danger: #b4443a;
+  --win: #2f7d4a;
+  --draw: #8a7a2e;
+  --loss: #b4443a;
+  --sq-light: #ecdcbf;
+  --sq-dark: #b58863;
+  --sq-last: rgba(214, 190, 60, .55);
+  --sq-sel: rgba(58, 110, 165, .55);
+  --sq-check: rgba(200, 40, 40, .75);
+  --dot: rgba(30, 30, 30, .28);
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 6px 20px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17181b; --panel: #222429; --text: #e9e6df; --muted: #9a968d; --border: #34373e;
+    --accent: #6c9fd6; --accent-text: #0f1114; --danger: #e0776c; --win: #6cc58b; --draw: #d3c06a; --loss: #e0776c;
+    --sq-light: #c9b99a; --sq-dark: #8a6a4d; --dot: rgba(10,10,10,.35);
+    --shadow: 0 1px 3px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17181b; --panel: #222429; --text: #e9e6df; --muted: #9a968d; --border: #34373e;
+  --accent: #6c9fd6; --accent-text: #0f1114; --danger: #e0776c; --win: #6cc58b; --draw: #d3c06a; --loss: #e0776c;
+  --sq-light: #c9b99a; --sq-dark: #8a6a4d; --dot: rgba(10,10,10,.35);
+  --shadow: 0 1px 3px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--panel);
+}
+header h1 { font-size: 18px; margin: 0; font-weight: 650; }
+header .sp { flex: 1; }
+.conn { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.conn i { width: 8px; height: 8px; border-radius: 50%; background: var(--win); display: inline-block; }
+.conn.off i { background: var(--danger); }
+label.toggle { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+main {
+  display: grid; gap: 16px; padding: 16px; max-width: 1240px; margin: 0 auto;
+  grid-template-columns: 240px minmax(0, 1fr) 300px;
+}
+@media (max-width: 1060px) { main { grid-template-columns: minmax(0, 1fr) 300px; } #games { grid-column: 1 / -1; } }
+@media (max-width: 760px)  { main { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); padding: 14px; }
+.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+
+/* games list */
+#gameList { display: flex; flex-direction: column; gap: 8px; }
+@media (max-width: 1060px) { #gameList { flex-direction: row; flex-wrap: wrap; } #gameList .g { flex: 1 1 200px; } }
+.g {
+  text-align: left; width: 100%; border: 1px solid var(--border); background: transparent; color: inherit;
+  border-radius: 8px; padding: 10px 12px; cursor: pointer; font: inherit;
+}
+.g:hover { border-color: var(--accent); }
+.g.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.g .t { font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.g .s { font-size: 13px; color: var(--muted); }
+.badge { font-size: 12px; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+.badge.in_progress { color: var(--accent); border-color: var(--accent); }
+.badge.win { color: var(--win); border-color: var(--win); }
+.badge.draw { color: var(--draw); border-color: var(--draw); }
+.badge.loss { color: var(--loss); border-color: var(--loss); }
+.score { margin-top: 12px; font-size: 13px; color: var(--muted); }
+.score b { color: var(--text); }
+
+/* board */
+#boardWrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.player { width: 100%; max-width: 640px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; min-height: 24px; }
+.player .who { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.player .cap { color: var(--muted); font-size: 18px; letter-spacing: -2px; }
+.player .cap em { font-style: normal; font-size: 13px; letter-spacing: 0; margin-left: 6px; }
+.dotc { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #555; display: inline-block; }
+.dotc.w { background: #fff; } .dotc.b { background: #222; }
+#board {
+  width: min(100%, 640px); aspect-ratio: 1; display: grid;
+  grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+  border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); touch-action: none; user-select: none;
+}
+.sq { position: relative; display: flex; align-items: center; justify-content: center; }
+.sq.l { background: var(--sq-light); } .sq.d { background: var(--sq-dark); }
+.sq.last::before, .sq.sel::before, .sq.check::before { content: ""; position: absolute; inset: 0; }
+.sq.last::before { background: var(--sq-last); }
+.sq.sel::before { background: var(--sq-sel); }
+.sq.check::before { background: radial-gradient(circle, var(--sq-check) 0%, rgba(200,40,40,.35) 55%, transparent 75%); }
+.sq.tgt::after { content: ""; position: absolute; width: 30%; height: 30%; border-radius: 50%; background: var(--dot); pointer-events: none; }
+.sq.tgt.cap::after { width: 88%; height: 88%; background: transparent; border: 5px solid var(--dot); }
+.sq .co { position: absolute; font-size: 11px; font-weight: 600; opacity: .75; pointer-events: none; }
+.sq .co.r { top: 2px; left: 4px; } .sq .co.f { bottom: 1px; right: 4px; }
+.sq.l .co { color: var(--sq-dark); } .sq.d .co { color: var(--sq-light); }
+.pc {
+  position: relative; z-index: 1; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: min(9.5vw, 60px); line-height: 1; cursor: default;
+  font-family: "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols 2", "Apple Symbols", serif;
+}
+.pc.w { color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000, 0 1px 2px rgba(0,0,0,.6); }
+.pc.b { color: #111; text-shadow: 0 0 1px rgba(255,255,255,.5); }
+.pc.mine { cursor: grab; }
+.pc.drag { position: fixed; z-index: 50; pointer-events: none; transform: translate(-50%, -50%); cursor: grabbing; }
+.pc.ghost { opacity: .3; }
+
+.nav { display: flex; gap: 6px; justify-content: center; }
+button.b {
+  font: inherit; font-size: 14px; border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  padding: 7px 12px; border-radius: 7px; cursor: pointer;
+}
+button.b:hover:not(:disabled) { border-color: var(--accent); }
+button.b:disabled { opacity: .45; cursor: not-allowed; }
+button.b.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+button.b.danger { color: var(--danger); }
+
+/* side panel */
+#side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+#status { font-weight: 600; font-size: 16px; }
+#status.turn { color: var(--accent); }
+#status.over { color: var(--text); }
+#sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+#moves { max-height: 360px; overflow: auto; font-variant-numeric: tabular-nums; font-size: 14px; }
+#moves table { width: 100%; border-collapse: collapse; }
+#moves td { padding: 2px 6px; }
+#moves td.n { color: var(--muted); width: 36px; text-align: right; }
+#moves span.m { cursor: pointer; border-radius: 4px; padding: 1px 4px; }
+#moves span.m:hover { background: var(--border); }
+#moves span.m.cur { background: var(--accent); color: var(--accent-text); }
+.empty { color: var(--muted); font-size: 13px; }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+#toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100% - 32px);
+  background: var(--danger); color: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: var(--shadow);
+  font-size: 14px; display: none; z-index: 100;
+}
+#promo {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 60;
+}
+#promo .box { background: var(--panel); border-radius: 10px; padding: 14px; display: flex; gap: 8px; box-shadow: var(--shadow); }
+#promo button { font-size: 48px; width: 72px; height: 72px; border-radius: 8px; border: 1px solid var(--border); background: var(--sq-light); cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>♞ Chess Gauntlet</h1>
+  <span class="conn" id="conn"><i></i><span>connected</span></span>
+  <span class="sp"></span>
+  <label class="toggle" title="Watch only: disables Start, Move and Resign so you don't interfere with an agent's run">
+    <input type="checkbox" id="spectate"> Spectator mode
+  </label>
+  <button class="b" id="themeBtn" title="Toggle light / dark theme">Theme</button>
+</header>
+
+<main>
+  <section class="card" id="games">
+    <h2>Gauntlet</h2>
+    <div id="gameList"></div>
+    <div class="score" id="score"></div>
+  </section>
+
+  <section id="boardWrap">
+    <div class="player" id="topPlayer"></div>
+    <div id="board" aria-label="chess board"></div>
+    <div class="player" id="botPlayer"></div>
+    <div class="nav">
+      <button class="b" id="navFirst" title="First (Home)">⏮</button>
+      <button class="b" id="navPrev" title="Previous (←)">◀</button>
+      <button class="b" id="navNext" title="Next (→)">▶</button>
+      <button class="b" id="navLast" title="Live (End)">⏭</button>
+      <button class="b" id="flipBtn" title="Flip board (F)">⇅ Flip</button>
+    </div>
+  </section>
+
+  <aside id="side">
+    <section class="card">
+      <h2 id="gameTitle">Game</h2>
+      <div id="status">—</div>
+      <div id="sub"></div>
+      <div class="actions">
+        <button class="b primary" id="startBtn">Start game</button>
+        <button class="b danger" id="resignBtn">Resign</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Moves</h2>
+      <div id="moves"></div>
+    </section>
+    <section class="card">
+      <details>
+        <summary>FEN / details</summary>
+        <div class="mono" id="fen" style="margin-top:8px"></div>
+        <div class="empty" id="extra" style="margin-top:6px"></div>
+      </details>
+    </section>
+  </aside>
+</main>
+
+<div id="promo"><div class="box" id="promoBox"></div></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Chess Gauntlet web UI. Uses only the public REST API of the arena:
+//   GET  /api/games                 overview
+//   GET  /api/ui/games/{slot}       state + UCI legal moves (UI helper)
+//   POST /api/games/{slot}/start | /move {move} | /resign
+// ---------------------------------------------------------------------------
+const GLYPH = { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟" };
+const VALUE = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
+const FILES = "abcdefgh";
+const $ = (id) => document.getElementById(id);
+
+const ui = {
+  slot: null,          // selected game slot
+  overview: null,      // /api/games payload
+  state: null,         // /api/ui/games/{slot} payload
+  view: null,          // ply index being viewed (null = live)
+  flipped: null,       // null = auto (your colour at the bottom)
+  selected: null,      // selected square, e.g. "e2"
+  busy: false,         // a POST is in flight
+  pendingFen: null,    // optimistic position while waiting for the opponent
+  pendingLast: null,
+};
+
+try { ui.slot = Number(localStorage.getItem("cg.slot")) || null; } catch (e) {}
+try { $("spectate").checked = localStorage.getItem("cg.spectate") === "1"; } catch (e) {}
+try { const t = localStorage.getItem("cg.theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+// ---- API ------------------------------------------------------------------
+async function api(path, body) {
+  const opts = body === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  };
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+  return data;
+}
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._h); toast._h = setTimeout(() => (t.style.display = "none"), 4500);
+}
+
+function setConn(ok) {
+  $("conn").classList.toggle("off", !ok);
+  $("conn").querySelector("span").textContent = ok ? "connected" : "arena unreachable";
+}
+
+// ---- tiny position model (only to replay UCI history; legality comes from the server)
+function parseFen(fen) {
+  const [placement, turn] = fen.split(" ");
+  const board = {};
+  placement.split("/").forEach((row, i) => {
+    let f = 0;
+    for (const ch of row) {
+      if (/\d/.test(ch)) { f += Number(ch); continue; }
+      board[FILES[f] + (8 - i)] = ch;
+      f++;
+    }
+  });
+  return { board, turn };
+}
+const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+function applyUci(board, uci) {
+  const b = { ...board };
+  const from = uci.slice(0, 2), to = uci.slice(2, 4), promo = uci[4];
+  const p = b[from];
+  if (!p) return b;
+  delete b[from];
+  const isPawn = p.toUpperCase() === "P";
+  // en passant: pawn moves diagonally onto an empty square
+  if (isPawn && from[0] !== to[0] && !b[to]) delete b[to[0] + from[1]];
+  // castling: king moves two files
+  if (p.toUpperCase() === "K" && Math.abs(FILES.indexOf(from[0]) - FILES.indexOf(to[0])) === 2) {
+    const r = from[1];
+    if (to[0] === "g") { b["f" + r] = b["h" + r]; delete b["h" + r]; }
+    else { b["d" + r] = b["a" + r]; delete b["a" + r]; }
+  }
+  b[to] = promo ? (p === p.toUpperCase() ? promo.toUpperCase() : promo.toLowerCase()) : p;
+  return b;
+}
+
+function positionAt(ply) {
+  let b = parseFen(START_FEN).board;
+  const ms = ui.state.moves_uci;
+  for (let i = 0; i < ply && i < ms.length; i++) b = applyUci(b, ms[i]);
+  return b;
+}
+
+// ---- rendering ------------------------------------------------------------
+function myColor() { return ui.state ? ui.state.your_color : "white"; }
+function isFlipped() { return ui.flipped === null ? myColor() === "black" : ui.flipped; }
+function canInteract() {
+  const s = ui.state;
+  return s && s.status === "in_progress" && s.your_turn && ui.view === null && !ui.busy && !$("spectate").checked;
+}
+
+function renderGames() {
+  const ov = ui.overview; if (!ov) return;
+  const list = $("gameList"); list.innerHTML = "";
+  let pts = 0, done = 0;
+  for (const g of ov.games) {
+    const btn = document.createElement("button");
+    btn.className = "g" + (g.slot === ui.slot ? " active" : "");
+    let badge = g.status.replace("_", " "), cls = g.status;
+    if (g.status === "finished") { badge = `${g.your_outcome} · ${g.result}`; cls = g.your_outcome; done++; }
+    if (g.your_outcome === "win") pts += 1; else if (g.your_outcome === "draw") pts += 0.5;
+    btn.innerHTML = `<div class="t"><span>${g.slot}. ${g.opponent}</span><span class="badge ${cls}">${badge}</span></div>
+      <div class="s">Level ${g.opponent_level} · you play ${g.your_color}</div>`;
+    btn.onclick = () => selectGame(g.slot);
+    list.appendChild(btn);
+  }
+  $("score").innerHTML = `Points (W=1, D=½): <b>${pts}</b> / ${ov.games.length} · ${done} finished`;
+}
+
+function material(board) {
+  const count = { w: {}, b: {} };
+  for (const p of Object.values(board)) {
+    const c = p === p.toUpperCase() ? "w" : "b";
+    const k = p.toUpperCase(); count[c][k] = (count[c][k] || 0) + 1;
+  }
+  const full = { P: 8, N: 2, B: 2, R: 2, Q: 1 };
+  const captured = { w: [], b: [] };  // pieces of that colour that were taken
+  let score = { w: 0, b: 0 };
+  for (const c of ["w", "b"]) for (const k of "QRBNP") {
+    const missing = Math.max(0, full[k] - (count[c][k] || 0));
+    for (let i = 0; i < missing; i++) captured[c].push(k);
+    score[c] += (count[c][k] || 0) * VALUE[k];
+  }
+  return { captured, diff: score.w - score.b };
+}
+
+function renderPlayers(board) {
+  const s = ui.state;
+  const { captured, diff } = material(board);
+  const line = (color) => {
+    const c = color[0];
+    const name = color === myColor() ? "You" : `${s.opponent} (L${s.opponent_level})`;
+    const took = captured[c === "w" ? "b" : "w"].map((k) => GLYPH[k]).join("");
+    const adv = c === "w" ? diff : -diff;
+    const toMove = s.status === "in_progress" && s.side_to_move === color && ui.view === null;
+    return `<span class="who"><span class="dotc ${c}"></span>${name}${toMove ? " ·  to move" : ""}</span>
+            <span class="cap">${took}${adv > 0 ? `<em>+${adv}</em>` : ""}</span>`;
+  };
+  const top = isFlipped() ? "white" : "black";
+  $("topPlayer").innerHTML = line(top);
+  $("botPlayer").innerHTML = line(top === "white" ? "black" : "white");
+}
+
+function kingSquare(board, color) {
+  const k = color === "white" ? "K" : "k";
+  return Object.keys(board).find((sq) => board[sq] === k);
+}
+
+function renderBoard() {
+  const el = $("board"); el.innerHTML = "";
+  const s = ui.state;
+  let board, last = null, check = null;
+  if (!s) { board = parseFen(START_FEN).board; }
+  else if (ui.view !== null) {
+    board = positionAt(ui.view);
+    last = ui.view > 0 ? s.moves_uci[ui.view - 1] : null;
+  } else if (ui.pendingFen) {
+    board = parseFen(ui.pendingFen).board; last = ui.pendingLast;
+  } else {
+    board = parseFen(s.fen).board; last = s.last_move_uci;
+    if (s.in_check) check = kingSquare(board, s.side_to_move);
+  }
+  const flip = isFlipped();
+  const targets = new Map();
+  if (ui.selected && canInteract()) {
+    for (const m of s.legal_moves_uci) if (m.uci.startsWith(ui.selected)) targets.set(m.uci.slice(2, 4), true);
+  }
+  const mine = myColor() === "white" ? (p) => p === p.toUpperCase() : (p) => p === p.toLowerCase();
+  for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+    const file = flip ? 7 - f : f, rank = flip ? r + 1 : 8 - r;
+    const sq = FILES[file] + rank;
+    const d = document.createElement("div");
+    d.className = "sq " + ((file + rank) % 2 === 1 ? "d" : "l");  // a1 is dark
+    d.dataset.sq = sq;
+    if (last && (sq === last.slice(0, 2) || sq === last.slice(2, 4))) d.classList.add("last");
+    if (sq === ui.selected) d.classList.add("sel");
+    if (sq === check) d.classList.add("check");
+    if (targets.has(sq)) { d.classList.add("tgt"); if (board[sq]) d.classList.add("cap"); }
+    if (f === 0) d.insertAdjacentHTML("beforeend", `<span class="co r">${rank}</span>`);
+    if (r === 7) d.insertAdjacentHTML("beforeend", `<span class="co f">${FILES[file]}</span>`);
+    const p = board[sq];
+    if (p) {
+      const pc = document.createElement("div");
+      const white = p === p.toUpperCase();
+      pc.className = "pc " + (white ? "w" : "b") + (canInteract() && mine(p) ? " mine" : "");
+      pc.textContent = GLYPH[p.toUpperCase()];
+      d.appendChild(pc);
+    }
+    el.appendChild(d);
+  }
+  renderPlayers(board);
+}
+
+function renderSide() {
+  const s = ui.state;
+  const spect = $("spectate").checked;
+  if (!s) {
+    $("gameTitle").textContent = "Game"; $("status").textContent = "Select a game"; $("sub").textContent = "";
+    $("startBtn").style.display = "none"; $("resignBtn").style.display = "none"; $("moves").innerHTML = ""; return;
+  }
+  $("gameTitle").textContent = `Game ${s.slot} · ${s.opponent} (level ${s.opponent_level})`;
+  const st = $("status"); st.className = "";
+  let sub = `You play ${s.your_color}.`;
+  if (s.status === "not_started") {
+    st.textContent = "Not started yet";
+    sub += " Each game can be started only once, and only one game may be active at a time.";
+  } else if (s.status === "in_progress") {
+    if (ui.busy) st.textContent = "Opponent is thinking…";
+    else if (s.your_turn) { st.textContent = s.in_check ? "Your move — you are in check!" : "Your move"; st.className = "turn"; }
+    else st.textContent = "Opponent to move";
+    sub += ` Ply ${s.plies_played} · ${s.plies_until_move_limit} plies until the move limit.`;
+  } else {
+    const word = { win: "You won", draw: "Draw", loss: "You lost" }[s.your_outcome] || "Finished";
+    st.textContent = `${word} · ${s.result}`; st.className = "over";
+    sub += ` Ended by ${String(s.termination).replace(/_/g, " ")}.`;
+  }
+  if (ui.view !== null) sub += ` Reviewing ply ${ui.view} — press ⏭ to return to the live position.`;
+  if (spect) sub += " Spectator mode is on.";
+  $("sub").textContent = sub;
+
+  const sb = $("startBtn"), rb = $("resignBtn");
+  sb.style.display = s.status === "not_started" ? "" : "none";
+  rb.style.display = s.status === "in_progress" ? "" : "none";
+  const someoneActive = ui.overview && ui.overview.games.some((g) => g.status === "in_progress");
+  sb.disabled = spect || ui.busy || someoneActive;
+  sb.title = someoneActive ? "Another game is in progress" : "";
+  rb.disabled = spect || ui.busy;
+
+  // move list
+  const mv = $("moves");
+  const san = s.moves_san;
+  if (!san.length) { mv.innerHTML = `<div class="empty">No moves yet.</div>`; }
+  else {
+    const cur = ui.view === null ? san.length : ui.view;
+    let html = "<table>";
+    for (let i = 0; i < san.length; i += 2) {
+      const cell = (j) => j < san.length ? `<span class="m${j + 1 === cur ? " cur" : ""}" data-ply="${j + 1}">${san[j]}</span>` : "";
+      html += `<tr><td class="n">${i / 2 + 1}.</td><td>${cell(i)}</td><td>${cell(i + 1)}</td></tr>`;
+    }
+    mv.innerHTML = html + "</table>";
+    mv.querySelectorAll("span.m").forEach((e) => (e.onclick = () => setView(Number(e.dataset.ply))));
+    if (ui.view === null) mv.scrollTop = mv.scrollHeight;
+  }
+  $("fen").textContent = s.fen;
+  $("extra").textContent = `Illegal move attempts recorded: ${s.illegal_attempts}`;
+}
+
+function render() { renderGames(); renderBoard(); renderSide(); }
+
+// ---- navigation -----------------------------------------------------------
+function setView(ply) {
+  if (!ui.state) return;
+  const n = ui.state.moves_uci.length;
+  ui.view = ply === null || ply >= n ? null : Math.max(0, ply);
+  ui.selected = null;
+  render();
+}
+$("navFirst").onclick = () => setView(0);
+$("navPrev").onclick = () => setView((ui.view === null ? ui.state.moves_uci.length : ui.view) - 1);
+$("navNext").onclick = () => ui.view !== null && setView(ui.view + 1);
+$("navLast").onclick = () => setView(null);
+$("flipBtn").onclick = () => { ui.flipped = !isFlipped(); renderBoard(); };
+document.addEventListener("keydown", (e) => {
+  if (!ui.state || e.target.tagName === "INPUT") return;
+  if (e.key === "ArrowLeft") $("navPrev").click();
+  else if (e.key === "ArrowRight") $("navNext").click();
+  else if (e.key === "Home") $("navFirst").click();
+  else if (e.key === "End") $("navLast").click();
+  else if (e.key === "f" || e.key === "F") $("flipBtn").click();
+  else if (e.key === "Escape") { ui.selected = null; renderBoard(); }
+});
+$("spectate").onchange = () => {
+  try { localStorage.setItem("cg.spectate", $("spectate").checked ? "1" : "0"); } catch (e) {}
+  ui.selected = null; render();
+};
+$("themeBtn").onclick = () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("cg.theme", root.dataset.theme); } catch (e) {}
+};
+
+// ---- moving ---------------------------------------------------------------
+function movesFrom(sq) { return ui.state.legal_moves_uci.filter((m) => m.uci.startsWith(sq)); }
+
+function choosePromotion(color) {
+  return new Promise((resolve) => {
+    const box = $("promoBox"); box.innerHTML = "";
+    for (const k of ["q", "r", "b", "n"]) {
+      const b = document.createElement("button");
+      b.textContent = GLYPH[k.toUpperCase()];
+      b.className = "pc " + (color === "white" ? "w" : "b");
+      b.onclick = () => { $("promo").style.display = "none"; resolve(k); };
+      box.appendChild(b);
+    }
+    $("promo").onclick = (e) => { if (e.target.id === "promo") { $("promo").style.display = "none"; resolve(null); } };
+    $("promo").style.display = "flex";
+  });
+}
+
+async function tryMove(from, to) {
+  const cands = movesFrom(from).filter((m) => m.uci.slice(2, 4) === to);
+  ui.selected = null;
+  if (!cands.length) { renderBoard(); return; }
+  let move = cands[0];
+  if (cands.length > 1 || move.uci.length === 5) {
+    const k = await choosePromotion(myColor());
+    if (!k) { renderBoard(); return; }
+    move = cands.find((m) => m.uci[4] === k) || cands[0];
+  }
+  // optimistic update while the opponent replies
+  ui.pendingFen = null;
+  const b = applyUci(parseFen(ui.state.fen).board, move.uci);
+  ui.pendingFen = boardToFen(b); ui.pendingLast = move.uci;
+  ui.busy = true; render();
+  const res = await api(`/api/games/${ui.slot}/move`, { move: move.uci });
+  ui.busy = false; ui.pendingFen = null; ui.pendingLast = null;
+  if (res.error) toast(res.error);
+  await refresh(true);
+}
+
+function boardToFen(b) {
+  let rows = [];
+  for (let r = 8; r >= 1; r--) {
+    let row = "", empty = 0;
+    for (const f of FILES) { const p = b[f + r]; if (p) { if (empty) row += empty; empty = 0; row += p; } else empty++; }
+    rows.push(row + (empty || ""));
+  }
+  return rows.join("/") + " w - - 0 1";
+}
+
+// pointer handling: click-click and drag-and-drop
+let drag = null;
+$("board").addEventListener("pointerdown", (e) => {
+  const sqEl = e.target.closest(".sq"); if (!sqEl || !canInteract()) return;
+  const sq = sqEl.dataset.sq;
+  if (ui.selected && ui.selected !== sq && movesFrom(ui.selected).some((m) => m.uci.slice(2, 4) === sq)) {
+    tryMove(ui.selected, sq); return;
+  }
+  if (movesFrom(sq).length) {
+    ui.selected = sq; renderBoard();
+    const pc = document.querySelector(`.sq[data-sq="${sq}"] .pc`);
+    if (pc) {
+      const ghost = pc.cloneNode(true);
+      ghost.classList.add("drag");
+      ghost.style.width = ghost.style.height = pc.getBoundingClientRect().width + "px";
+      ghost.style.left = e.clientX + "px"; ghost.style.top = e.clientY + "px";
+      document.body.appendChild(ghost); pc.classList.add("ghost");
+      drag = { from: sq, ghost, moved: false, x: e.clientX, y: e.clientY };
+    }
+  } else { ui.selected = null; renderBoard(); }
+});
+window.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) drag.moved = true;
+  drag.ghost.style.left = e.clientX + "px"; drag.ghost.style.top = e.clientY + "px";
+});
+window.addEventListener("pointerup", (e) => {
+  if (!drag) return;
+  const d = drag; drag = null; d.ghost.remove();
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const sqEl = el && el.closest && el.closest(".sq");
+  if (d.moved && sqEl && sqEl.dataset.sq !== d.from) tryMove(d.from, sqEl.dataset.sq);
+  else renderBoard();  // a plain click keeps the piece selected
+});
+
+// ---- actions --------------------------------------------------------------
+$("startBtn").onclick = async () => {
+  const s = ui.state;
+  if (!confirm(`Start game ${s.slot} vs ${s.opponent}? Each game can be played only once — there are no restarts.`)) return;
+  ui.busy = true; render();
+  const res = await api(`/api/games/${s.slot}/start`, {});
+  ui.busy = false;
+  if (res.error) toast(res.error);
+  await refresh(true);
+};
+$("resignBtn").onclick = async () => {
+  if (!confirm(`Resign game ${ui.slot}? This counts as a loss and cannot be undone.`)) return;
+  ui.busy = true; render();
+  const res = await api(`/api/games/${ui.slot}/resign`, {});
+  ui.busy = false;
+  if (res.error) toast(res.error);
+  await refresh(true);
+};
+
+function selectGame(slot) {
+  if (slot === ui.slot) return;
+  ui.slot = slot; ui.state = null; ui.view = null; ui.selected = null; ui.flipped = null;
+  try { localStorage.setItem("cg.slot", String(slot)); } catch (e) {}
+  refresh(true);
+}
+
+// ---- polling (also lets you watch an agent play live) ---------------------
+async function refresh(force) {
+  if (ui.busy && !force) return;
+  try {
+    ui.overview = await api("/api/games");
+    if (!ui.slot) {
+      const active = ui.overview.games.find((g) => g.status === "in_progress");
+      ui.slot = (active || ui.overview.games[0]).slot;
+    }
+    const st = await api(`/api/ui/games/${ui.slot}`);
+    if (st.error) { toast(st.error); return; }
+    const changed = !ui.state || ui.state.fen !== st.fen || ui.state.status !== st.status;
+    ui.state = st;
+    if (ui.view !== null && ui.view > st.moves_uci.length) ui.view = null;
+    setConn(true);
+    if (changed || force) { if (changed) ui.selected = null; render(); }
+    else renderGames();
+  } catch (e) { setConn(false); }
+}
+
+refresh(true);
+setInterval(() => refresh(false), 1500);
+</script>
+</body>
+</html>

@@ -9,6 +9,7 @@ RUN python3 -m venv /opt/venv \
 
 WORKDIR /srv
 COPY arena.py server.py ./
+COPY web ./web
 RUN mkdir -p /data
 
 ENV STOCKFISH_PATH=/usr/games/stockfish PYTHONUNBUFFERED=1

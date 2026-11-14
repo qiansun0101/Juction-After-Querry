@@ -318,6 +318,27 @@ class Arena:
                 "termination": game.termination,
             }
 
+    def ui_state(self, slot: int) -> dict:
+        """State for the web UI: the public state plus UCI move data for click-to-move.
+        Contains nothing that the public API does not already reveal (no evals)."""
+        with self._lock:
+            game = self._get(slot)
+            board = game.board()
+            st = self.state(game.slot)
+            legal = []
+            if game.status == "in_progress":
+                legal = [{"uci": m.uci(), "san": board.san(m)} for m in board.legal_moves]
+            st.update(
+                {
+                    "moves_san": list(game.moves_san),
+                    "moves_uci": list(game.moves_uci),
+                    "last_move_uci": game.moves_uci[-1] if game.moves_uci else None,
+                    "legal_moves_uci": legal,
+                    "illegal_attempts": len(game.illegal_attempts),
+                }
+            )
+            return st
+
     def overview(self) -> dict:
         with self._lock:
             return {

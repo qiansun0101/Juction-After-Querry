@@ -115,6 +115,31 @@ Run logs are in [`runs/`](runs/). Each folder is a full Harbor trial directory
 | Stop-early baseline (3 moves, then resign every game) | **0.0187** | |
 | OpenCode + frontier model | _TODO: run_ | `./run.sh <provider/model>` |
 
+## Web UI
+
+The arena server also serves a browser chess interface at `/` (or `/ui`). It
+only uses the public REST API, plus one UI helper endpoint
+(`GET /api/ui/games/{slot}`) that adds UCI legal moves and the UCI move list.
+It never exposes the hidden evaluations.
+
+- Click-to-move or drag-and-drop, legal-target hints, and a promotion picker
+- Last move and check highlighting, captured material, and an auto-flipped board
+  (your colour is at the bottom)
+- Clickable move list with step-through replay (← → Home End, F to flip)
+- Live polling, so you can watch an agent play in real time. Turn on
+  **Spectator mode** to disable Start, Move and Resign while watching.
+- Light and dark themes, responsive down to phone width
+
+To run the arena on its own and play in the browser:
+
+```
+docker build -t chess-arena environment/chess-arena
+docker run --rm -p 8000:8000 chess-arena     # then open http://localhost:8000/
+```
+
+Games are single-shot and use the same state as the agent's games. Starting or
+moving from the UI during an agent run therefore interferes with that run.
+
 ## Running it
 
 Requirements: Harbor plus either local Docker (`uv tool install harbor`) or
@@ -146,6 +171,7 @@ environment/Dockerfile         agent container (python3, curl, `chess` CLI)
 environment/client/chess       CLI client
 environment/docker-compose.yaml  adds the chess-arena sidecar
 environment/chess-arena/       arena server (MCP + REST), opponents, hidden evals
+environment/chess-arena/web/   browser chess UI served at /
 tests/test.sh, tests/verify.py verifier
 solution/                      reference solution: pure-Python engine
 runs/                          Harbor run logs

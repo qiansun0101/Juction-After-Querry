@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import hmac
 import os
+from pathlib import Path
 
 from fastmcp import FastMCP
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse
 
 from arena import Arena, ArenaError
 
 ADMIN_TOKEN = os.environ.get("ARENA_ADMIN_TOKEN", "")
+WEB_DIR = Path(__file__).resolve().parent / "web"
 arena = Arena()
 mcp = FastMCP(
     "chess-arena",
@@ -100,6 +102,21 @@ async def api_move(request: Request) -> JSONResponse:
 @mcp.custom_route("/api/games/{slot}/resign", methods=["POST"])
 async def api_resign(request: Request) -> JSONResponse:
     return _json(_call(arena.resign, request.path_params["slot"]))
+
+
+# -- web UI -------------------------------------------------------------------
+@mcp.custom_route("/", methods=["GET"])
+@mcp.custom_route("/ui", methods=["GET"])
+async def web_ui(_: Request) -> HTMLResponse:
+    page = WEB_DIR / "index.html"
+    if not page.exists():
+        return HTMLResponse("web UI not installed", status_code=404)
+    return HTMLResponse(page.read_text(encoding="utf-8"))
+
+
+@mcp.custom_route("/api/ui/games/{slot}", methods=["GET"])
+async def api_ui_state(request: Request) -> JSONResponse:
+    return _json(_call(arena.ui_state, request.path_params["slot"]))
 
 
 @mcp.custom_route("/admin/results", methods=["GET"])

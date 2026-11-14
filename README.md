@@ -109,15 +109,17 @@ Run logs are in [`runs/`](runs/). Each folder is a full Harbor trial directory
 
 | Run | Reward | Notes |
 |-----|--------|-------|
-| Oracle (`solution/`, self-written engine) | **0.6306** | Won L1 and L2, drew L3, lost L4 |
+| Oracle (`solution/`, self-written engine) | **0.6306** | Won L1 and L2, drew L3, lost L4. Reproduced exactly (0.6306) on both local Docker and Modal (`-e modal`) |
 | Do-nothing baseline (`-a nop`) | **0.0000** | |
 | Stop-early baseline (3 moves, then resign every game) | **0.0187** | |
 | OpenCode + frontier model | _TODO: run_ | `./run.sh <provider/model>` |
 
 ## Running it
 
-Requirements: Docker and Harbor (`uv tool install harbor`). The arena is a
-docker-compose sidecar, so use the **docker** environment.
+Requirements: Harbor plus either local Docker (`uv tool install harbor`) or
+Modal (`uv tool install "harbor[modal]"`, then `modal token new`). The arena
+is a docker-compose sidecar; both `-e docker` and `-e modal` are tested.
+On Modal: `harbor run -p . -a oracle -e modal`.
 
 ```
 cp .env.example .env        # then put ONE API key in .env

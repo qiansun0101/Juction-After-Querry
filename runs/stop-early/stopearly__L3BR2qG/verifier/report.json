@@ -1,0 +1,133 @@
+{
+  "reward": 0.0187,
+  "integrity_violations": [],
+  "scoring": {
+    "per_game": "win=1.0, draw=0.5, loss/unfinished=0.3 x min(1, held_moves/40)",
+    "held_move": "agent move after which the hidden Stockfish eval (agent POV) is >= -150 cp",
+    "reward": "mean of the four game scores; 0 if a third-party engine is found"
+  },
+  "summary": {
+    "games_started": 4,
+    "wins": 0,
+    "draws": 0,
+    "losses_or_unfinished": 4,
+    "total_blunders": 1,
+    "total_illegal_move_attempts": 0,
+    "games_failed_to_convert": []
+  },
+  "games": [
+    {
+      "slot": 1,
+      "opponent_level": 1,
+      "agent_color": "white",
+      "status": "finished",
+      "result": "0-1",
+      "outcome": "loss",
+      "termination": "resignation",
+      "score": 0.0225,
+      "scoring_note": "loss",
+      "agent_moves": 3,
+      "held_moves": 3,
+      "blunders": [],
+      "illegal_move_attempts": 0,
+      "illegal_move_examples": [],
+      "best_eval_reached_cp": -34,
+      "failed_to_convert": false,
+      "moves_san": [
+        "Na3",
+        "g6",
+        "Nb1",
+        "Nh6",
+        "Na3",
+        "Nf5"
+      ]
+    },
+    {
+      "slot": 2,
+      "opponent_level": 2,
+      "agent_color": "black",
+      "status": "finished",
+      "result": "1-0",
+      "outcome": "loss",
+      "termination": "resignation",
+      "score": 0.015,
+      "scoring_note": "loss",
+      "agent_moves": 3,
+      "held_moves": 2,
+      "blunders": [
+        {
+          "ply": 6,
+          "move": "Na2",
+          "eval_before": -100,
+          "eval_after": -532
+        }
+      ],
+      "illegal_move_attempts": 0,
+      "illegal_move_examples": [],
+      "best_eval_reached_cp": -75,
+      "failed_to_convert": false,
+      "moves_san": [
+        "h3",
+        "Na6",
+        "e3",
+        "Nb4",
+        "a3",
+        "Na2",
+        "Bc4"
+      ]
+    },
+    {
+      "slot": 3,
+      "opponent_level": 3,
+      "agent_color": "white",
+      "status": "finished",
+      "result": "0-1",
+      "outcome": "loss",
+      "termination": "resignation",
+      "score": 0.0225,
+      "scoring_note": "loss",
+      "agent_moves": 3,
+      "held_moves": 3,
+      "blunders": [],
+      "illegal_move_attempts": 0,
+      "illegal_move_examples": [],
+      "best_eval_reached_cp": -81,
+      "failed_to_convert": false,
+      "moves_san": [
+        "Na3",
+        "d5",
+        "Nb1",
+        "d4",
+        "Na3",
+        "e5"
+      ]
+    },
+    {
+      "slot": 4,
+      "opponent_level": 4,
+      "agent_color": "black",
+      "status": "finished",
+      "result": "1-0",
+      "outcome": "loss",
+      "termination": "resignation",
+      "score": 0.015,
+      "scoring_note": "loss",
+      "agent_moves": 3,
+      "held_moves": 2,
+      "blunders": [],
+      "illegal_move_attempts": 0,
+      "illegal_move_examples": [],
+      "best_eval_reached_cp": -111,
+      "failed_to_convert": false,
+      "moves_san": [
+        "e4",
+        "Na6",
+        "Nf3",
+        "Nb4",
+        "d4",
+        "Na6",
+        "h3"
+      ]
+    }
+  ]
+}

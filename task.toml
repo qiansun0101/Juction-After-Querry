@@ -1,0 +1,43 @@
+schema_version = "1.4"
+
+[task]
+name = "junction-2026/chess-gauntlet"
+version = "1.0.0"
+description = "Play a four-game chess gauntlet against a deterministic ladder of increasingly strong engine opponents, with no third-party engines and no internet."
+authors = []
+keywords = ["chess", "planning", "games", "tool-use", "long-horizon"]
+
+[metadata]
+difficulty = "hard"
+category = "games"
+tags = ["chess", "planning", "adversarial", "mcp", "partial-credit"]
+
+[agent]
+timeout_sec = 7200.0
+# No internet while the agent plays: Harbor still allowlists the model's
+# inference endpoint, but pip/apt/curl cannot fetch Stockfish or python-chess.
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 900.0
+
+[environment]
+build_timeout_sec = 1200.0
+cpus = 2
+memory_mb = 4096
+storage_mb = 10240
+gpus = 0
+
+# The arena sidecar shares the agent container's network namespace under
+# Harbor's egress control, so it is reachable on localhost.
+[[environment.mcp_servers]]
+name = "chess-arena"
+transport = "streamable-http"
+url = "http://127.0.0.1:8000/mcp"
+args = []
+
+[verifier.env]
+
+[environment.env]
+
+[solution.env]

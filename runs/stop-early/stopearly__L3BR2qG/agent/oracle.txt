@@ -1,0 +1,4 @@
+GAME OVER: 0-1 - you loss (resignation)
+GAME OVER: 1-0 - you loss (resignation)
+GAME OVER: 0-1 - you loss (resignation)
+GAME OVER: 1-0 - you loss (resignation)

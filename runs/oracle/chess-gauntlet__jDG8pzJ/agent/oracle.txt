@@ -1,0 +1,4 @@
+game 1: 1-0 (win, checkmate) after 37 plies
+game 2: 0-1 (win, checkmate) after 54 plies
+game 3: 1/2-1/2 (draw, insufficient_material) after 170 plies
+game 4: 1-0 (loss, checkmate) after 159 plies

@@ -1,0 +1,17 @@
+{
+  "reward": 0.6306,
+  "integrity_violations": [],
+  "summary": {
+    "games_started": 4,
+    "wins": 2,
+    "draws": 1,
+    "losses_or_unfinished": 1,
+    "total_blunders": 6,
+    "total_illegal_move_attempts": 0,
+    "games_failed_to_convert": []
+  }
+}
+game 1 (L1, white): win score=1.0 held=19/19 blunders=0 illegal=0
+game 2 (L2, black): win score=1.0 held=27/27 blunders=0 illegal=0
+game 3 (L3, white): draw score=0.5 held=31/85 blunders=2 illegal=0
+game 4 (L4, black): loss score=0.0225 held=3/79 blunders=4 illegal=0

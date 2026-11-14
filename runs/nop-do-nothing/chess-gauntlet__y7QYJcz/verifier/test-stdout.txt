@@ -1,0 +1,17 @@
+{
+  "reward": 0.0,
+  "integrity_violations": [],
+  "summary": {
+    "games_started": 0,
+    "wins": 0,
+    "draws": 0,
+    "losses_or_unfinished": 0,
+    "total_blunders": 0,
+    "total_illegal_move_attempts": 0,
+    "games_failed_to_convert": []
+  }
+}
+game 1 (L1, white): never started score=0.0 held=0/0 blunders=0 illegal=0
+game 2 (L2, black): never started score=0.0 held=0/0 blunders=0 illegal=0
+game 3 (L3, white): never started score=0.0 held=0/0 blunders=0 illegal=0
+game 4 (L4, black): never started score=0.0 held=0/0 blunders=0 illegal=0

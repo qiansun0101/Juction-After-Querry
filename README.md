@@ -94,7 +94,8 @@ conversions and the full move list.
 
 | Exploit attempt | Defence |
 |-----------------|---------|
-| `pip install python-chess` / `apt install stockfish` | Agent phase runs with `network_mode = "no-network"`. Harbor allowlists only the model's inference host. Tested: pypi is unreachable from the container, even via a proxy. |
+| `pip install python-chess` / `apt install stockfish` | Agent phase runs on an allowlist: the model's inference host, plus `registry.npmjs.org` and `models.dev`, which OpenCode itself needs at runtime. PyPI, apt and GitHub are unreachable. |
+| `npm install stockfish` / `chess.js` (npm is reachable for OpenCode) | The verifier scans `node_modules`, bun's cache and npm's download cache (which survives uninstalling). Any JS chess engine or library sets the reward to 0. |
 | Use the opponent's engine | Stockfish lives only in the `chess-arena` sidecar container. The agent has no filesystem or process access to it. |
 | Read the hidden evals / forge results | Evals are never returned by the public API. `/admin/results` needs a token that exists only in `environment/docker-compose.yaml` (on the host) and `tests/` (copied in after the agent finishes). |
 | Retry a game until a lucky win (deterministic opponent) | Each game can be started once. There are no restarts or take-backs. |

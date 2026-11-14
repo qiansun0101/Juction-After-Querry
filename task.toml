@@ -14,9 +14,13 @@ tags = ["chess", "planning", "adversarial", "mcp", "partial-credit"]
 
 [agent]
 timeout_sec = 7200.0
-# No internet while the agent plays: Harbor still allowlists the model's
-# inference endpoint, but pip/apt/curl cannot fetch Stockfish or python-chess.
-network_mode = "no-network"
+# No general internet while the agent plays. Harbor adds the model's inference
+# endpoint automatically; OpenCode additionally needs npm (it downloads its
+# provider SDK at runtime) and models.dev (model catalogue). PyPI, apt, GitHub
+# etc. stay blocked, and the verifier zeroes the reward if a JS/Python chess
+# engine or library shows up (installed or in the npm cache).
+network_mode = "allowlist"
+allowed_hosts = ["registry.npmjs.org", "models.dev"]
 
 [verifier]
 timeout_sec = 900.0

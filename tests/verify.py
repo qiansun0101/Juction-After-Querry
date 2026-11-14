@@ -112,6 +112,31 @@ def integrity_scan() -> list[str]:
         findings += [f"engine file: {p}" for p in out[:20]]
     except Exception:  # noqa: BLE001
         pass
+    # npm is reachable during the agent phase (OpenCode needs it for its provider
+    # SDK), so look for JavaScript chess engines/libraries, both installed and in
+    # npm's download cache (which survives `npm uninstall` / `rm -rf node_modules`).
+    npm_pkgs = ("stockfish", "stockfish.js", "stockfish.wasm", "lila-stockfish-web", "chess.js",
+                "js-chess-engine", "chessops", "chess", "chessground", "lc0", "fairy-stockfish-nnue.wasm")
+    try:
+        name_args = []
+        for p in npm_pkgs:
+            name_args += ["-o", "-path", f"*/node_modules/{p}", "-o", "-path", f"*/install/cache/{p}@*"]
+        out = subprocess.run(
+            ["find", "/", "-xdev", "(", "-path", "/proc", "-o", "-path", "/sys", ")", "-prune", "-o",
+             "-type", "d", "(", *name_args[1:], ")", "-print"],
+            capture_output=True, text=True, timeout=180,
+        ).stdout.split()
+        findings += [f"npm chess package installed: {p}" for p in out[:20]]
+        for cache in ("/root/.npm/_cacache/index-v5", *[str(p) for p in Path("/home").glob("*/.npm/_cacache/index-v5")]):
+            if not os.path.isdir(cache):
+                continue
+            for p in npm_pkgs:
+                r = subprocess.run(["grep", "-rlF", f"registry.npmjs.org/{p}/-/", cache],
+                                   capture_output=True, text=True, timeout=60)
+                if r.stdout.strip():
+                    findings.append(f"npm chess package downloaded (npm cache): {p}")
+    except Exception:  # noqa: BLE001
+        pass
     for py in {shutil.which("python3"), "/usr/bin/python3", "/usr/local/bin/python3"}:
         if py and os.path.exists(py):
             r = subprocess.run([py, "-I", "-c", "import chess, chess.engine; print(chess.__file__)"],
